@@ -2,26 +2,36 @@ package com.francis.bookshop.service;
 
 import com.francis.bookshop.dto.UserDto;
 import com.francis.bookshop.dto.UserLoginDto;
+import com.francis.bookshop.entity.Role;
 import com.francis.bookshop.entity.User;
 import com.francis.bookshop.enums.UserRole;
+import com.francis.bookshop.repository.RoleRepository;
 import com.francis.bookshop.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttemptService;
+    private final RoleRepository roleRepository;
 
 
     @Autowired
-    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, LoginAttemptService loginAttemptService, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.loginAttemptService = loginAttemptService;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -29,17 +39,21 @@ public class AuthServiceImpl implements AuthService {
         if (userRepository.existsByUsername(userDto.getUsername())) {
             throw new IllegalArgumentException("Username already exists");
         }
+        // Validate role from enum
+        UserRole userRole = UserRole.isValidRole(userDto.getRole())
+                ? UserRole.valueOf(userDto.getRole().toUpperCase())
+                : UserRole.USER;
 
-        UserRole
-            role =
-            (UserRole.isValidRole(userDto.getRole())) ? UserRole.valueOf(userDto.getRole().toUpperCase())
-                                                      : UserRole.USER;
+        // Lookup role from roles table
+        Role roleEntity = roleRepository.findByName(userRole)
+                .orElseThrow(() -> new IllegalArgumentException("Role " + userRole + " not found in DB"));
+
         User newUser = new User();
         newUser.setUsername(userDto.getUsername());
         newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
         newUser.setName(userDto.getName());
         newUser.setSurname(userDto.getSurname());
-        newUser.setRole(role);
+        newUser.setRole(roleEntity);
         newUser.setEmail(userDto.getEmail());
         newUser.setDateOfBirth(userDto.getDateOfBirth());
         newUser.setAddress(userDto.getAddress());
@@ -50,6 +64,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserDto authenticate(UserLoginDto userLoginDto) {
+
+        if (loginAttemptService.isBlocked(userLoginDto.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Account locked. Too many attempts");
+        }
         Optional<User> userOptional = userRepository.findByUsername(userLoginDto.getUsername());
 
         if (userOptional.isPresent()) {
@@ -58,25 +76,16 @@ public class AuthServiceImpl implements AuthService {
             if (passwordEncoder.matches(userLoginDto.getPassword(), user.getPassword())) {
                 return toDto(user);
             } else {
-                throw new IllegalArgumentException("Invalid password");
+                loginAttemptService.recordFailure(userLoginDto.getUsername());
+                log.error("failed login attempt username {}", userLoginDto.getUsername());
+                throw new IllegalArgumentException("Invalid credentials");
             }
         } else {
-            throw new IllegalArgumentException("User not found");
+            loginAttemptService.recordFailure(userLoginDto.getUsername());
+            log.error("login failure username {}", userLoginDto.getUsername());
+            throw new IllegalArgumentException("Invalid credentials");
         }
     }
-
-    @Override
-    public boolean setUserRole(String username, UserRole role) {
-        Optional<User> userOptional = userRepository.findByUsername(username);
-        if (userOptional.isPresent()) {
-            User existingUser = userOptional.get();
-            existingUser.setRole(role);
-            userRepository.save(existingUser);
-            return true;
-        }
-        return false;
-    }
-
     private UserDto toDto(User user) {
         return
             UserDto.builder()
@@ -87,7 +96,7 @@ public class AuthServiceImpl implements AuthService {
                 .phoneNumber(user.getPhoneNumber())
                 .dateOfBirth(user.getDateOfBirth())
                 .address(user.getAddress())
-                .role(user.getRole().name())
+                .role(user.getRole().getName().name())
                 .build();
     }
 

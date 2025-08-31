@@ -1,17 +1,11 @@
 package com.francis.bookshop.entity;
 
-import com.francis.bookshop.enums.UserRole;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import com.francis.bookshop.utility.AesEncryptingConverter;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
@@ -21,6 +15,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name="users")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,16 +33,20 @@ public class User {
 
     private String surname;
 
-    @Enumerated(EnumType.STRING)
-    private UserRole role;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
+    @Convert(converter = AesEncryptingConverter.class)
     private String address;
 
     @Column(name = "phone_number",  unique = true)
+    @Convert(converter = AesEncryptingConverter.class)
     private String phoneNumber;
 
     @Column(unique = true, nullable = false)
     @NotBlank(message = "Email is mandatory")
+    @Convert(converter = AesEncryptingConverter.class)
     private String email;
 
     @Column(name = "date_of_birth")

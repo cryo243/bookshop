@@ -27,7 +27,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             );
 
         // Prefix role with "ROLE_"
-        String roleName = "ROLE_" + user.getRole().name();
+        String roleName = "ROLE_" + user.getRole().getName();
 
         return new org.springframework.security.core.userdetails.User(
             user.getUsername(),

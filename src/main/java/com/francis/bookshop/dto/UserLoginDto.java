@@ -1,10 +1,13 @@
 package com.francis.bookshop.dto;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 public class UserLoginDto {
-   private String username;
+    @NotEmpty
+    private String username;
+    @NotEmpty
     private String password;
 }

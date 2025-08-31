@@ -7,6 +7,5 @@ import com.francis.bookshop.enums.UserRole;
 public interface AuthService {
      UserDto register(UserDto userDto);
      UserDto authenticate(UserLoginDto userLoginDto);
-     boolean setUserRole(String username, UserRole role);
 
 }
