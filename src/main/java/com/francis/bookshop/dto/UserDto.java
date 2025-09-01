@@ -35,4 +35,8 @@ public class UserDto {
     private String address;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private LocalDate dateOfBirth;
+    private boolean isUsing2FA;
+    private String mfaUri;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String secret;
 }

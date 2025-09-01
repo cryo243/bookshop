@@ -16,6 +16,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
+import static java.util.Objects.isNull;
+
 @Slf4j
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -24,14 +26,16 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final LoginAttemptService loginAttemptService;
     private final RoleRepository roleRepository;
+    private final MFAService mfaService;
 
 
     @Autowired
-    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, LoginAttemptService loginAttemptService, RoleRepository roleRepository) {
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, LoginAttemptService loginAttemptService, RoleRepository roleRepository, MFAService mfaService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.loginAttemptService = loginAttemptService;
         this.roleRepository = roleRepository;
+        this.mfaService = mfaService;
     }
 
     @Override
@@ -40,13 +44,10 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Username already exists");
         }
         // Validate role from enum
-        UserRole userRole = UserRole.isValidRole(userDto.getRole())
-                ? UserRole.valueOf(userDto.getRole().toUpperCase())
-                : UserRole.USER;
+        UserRole userRole = UserRole.isValidRole(userDto.getRole()) ? UserRole.valueOf(userDto.getRole().toUpperCase()) : UserRole.USER;
 
         // Lookup role from roles table
-        Role roleEntity = roleRepository.findByName(userRole)
-                .orElseThrow(() -> new IllegalArgumentException("Role " + userRole + " not found in DB"));
+        Role roleEntity = roleRepository.findByName(userRole).orElseThrow(() -> new IllegalArgumentException("Role " + userRole + " not found in DB"));
 
         User newUser = new User();
         newUser.setUsername(userDto.getUsername());
@@ -86,18 +87,28 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Invalid credentials");
         }
     }
+//    private UserDto performMFAAuthentication(RegisteredUserDto userLoginDto) {
+//        if (userLoginDto.isUsing2FA()) {
+//            if (isNull(userLoginDto.getSecret()) {
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+//                        .body("MFA code required");
+//            }
+//
+//            if (!authService.verifyMfaCode(authenticatedUser.getUsername(), userLoginDto.getMfaCode())) {
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+//                        .body("Invalid MFA code");
+//            }
+//        }
+//    }
+
+    @Override
+    public boolean verifyMfaCode(String username, int code) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return MFAServiceImpl.verifyCode(user.getMfaSecret(), code);
+    }
+
     private UserDto toDto(User user) {
-        return
-            UserDto.builder()
-                .surname(user.getSurname())
-                .name(user.getName())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .phoneNumber(user.getPhoneNumber())
-                .dateOfBirth(user.getDateOfBirth())
-                .address(user.getAddress())
-                .role(user.getRole().getName().name())
-                .build();
+        return UserDto.builder().surname(user.getSurname()).name(user.getName()).username(user.getUsername()).email(user.getEmail()).phoneNumber(user.getPhoneNumber()).dateOfBirth(user.getDateOfBirth()).address(user.getAddress()).role(user.getRole().getName().toString()).build();
     }
 
 }

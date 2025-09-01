@@ -2,6 +2,7 @@ package com.francis.bookshop.controller;
 
 import com.francis.bookshop.dto.UserDto;
 import com.francis.bookshop.dto.UserLoginDto;
+import com.francis.bookshop.dto.UserLoginResponseDto;
 import com.francis.bookshop.service.AuthService;
 import com.francis.bookshop.service.JwtTokenProvider;
 import jakarta.validation.Valid;
@@ -37,17 +38,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login( @Valid @RequestBody UserLoginDto userLoginDto) {
-        try {
+    public ResponseEntity<?> login( @Valid @RequestBody UserLoginDto userLoginDto) {
+
             UserDto authenticatedUser = authService.authenticate(userLoginDto);
             String token = jwtTokenProvider.generateToken(authenticatedUser);
-            return ResponseEntity.ok(token);
-        } catch (Exception e) {
-            if (e instanceof ResponseStatusException rse) {
-                return ResponseEntity.status(rse.getStatusCode()).body(rse.getReason());
-            }
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        }
+            UserLoginResponseDto userLoginResponseDto = UserLoginResponseDto.builder().role(authenticatedUser.getRole()).token(token).build();
 
+            return ResponseEntity.ok(userLoginResponseDto);
     }
 }
