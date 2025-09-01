@@ -27,15 +27,6 @@ public class AesEncryptingConverter implements AttributeConverter<String, String
     this.key = new SecretKeySpec(k, "AES");
   }
 
-  //    public AesEncryptingConverter(@Value("${aes.key-base64}") String keyB64) {
-  //        byte[] k = Base64.getDecoder().decode(keyB64);
-  //        if (k.length != 32) {
-  //            // I am using AES-256 and it requires a 32-byte key
-  //            throw new IllegalArgumentException("Invalid AES key length, must be 32 bytes");
-  //        }
-  //        this.key = new SecretKeySpec(k, "AES");
-  //    }
-
   @Override
   public String convertToDatabaseColumn(String attribute) {
     if (attribute == null) return null;
