@@ -6,7 +6,7 @@ import lombok.Data;
 @Builder
 @Data
 public class UserLoginResponseDto {
-    private String token;
-    private String role;
-    private boolean mfaRequired;
+  private String token;
+  private String role;
+  private boolean mfaRequired;
 }

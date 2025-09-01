@@ -11,15 +11,16 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
-    private final RoleRepository roleRepository;
+  private final RoleRepository roleRepository;
 
-    @Override
-    public void run(String... args) throws Exception {
-        // Loop through enum values
-        for (UserRole userRole : UserRole.values()) {
+  @Override
+  public void run(String... args) throws Exception {
+    // Loop through enum values
+    for (UserRole userRole : UserRole.values()) {
 
-            roleRepository.findByName(userRole)
-                    .orElseGet(() -> roleRepository.save(new Role(null, userRole)));
-        }
+      roleRepository
+          .findByName(userRole)
+          .orElseGet(() -> roleRepository.save(new Role(null, userRole)));
     }
+  }
 }

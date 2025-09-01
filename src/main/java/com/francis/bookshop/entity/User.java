@@ -2,59 +2,56 @@ package com.francis.bookshop.entity;
 
 import com.francis.bookshop.utility.AesEncryptingConverter;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import jakarta.validation.constraints.NotBlank;
-
-import java.time.LocalDate;
-
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name="users")
+@Table(name = "users")
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, unique = true)
-    @NotBlank(message = "Username is mandatory")
-    private String username;
+  @Column(nullable = false, unique = true)
+  @NotBlank(message = "Username is mandatory")
+  private String username;
 
-    @Column(nullable = false)
-    @NotBlank(message = "Password is mandatory")
-    private String password;
+  @Column(nullable = false)
+  @NotBlank(message = "Password is mandatory")
+  private String password;
 
-    private String name;
+  private String name;
 
-    private String surname;
+  private String surname;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = "role_id", nullable = false)
+  private Role role;
 
-    @Convert(converter = AesEncryptingConverter.class)
-    private String address;
+  @Convert(converter = AesEncryptingConverter.class)
+  private String address;
 
-    @Column(name = "phone_number",  unique = true)
-    @Convert(converter = AesEncryptingConverter.class)
-    private String phoneNumber;
+  @Column(name = "phone_number", unique = true)
+  @Convert(converter = AesEncryptingConverter.class)
+  private String phoneNumber;
 
-    @Column(unique = true, nullable = false)
-    @NotBlank(message = "Email is mandatory")
-    @Convert(converter = AesEncryptingConverter.class)
-    private String email;
+  @Column(unique = true, nullable = false)
+  @NotBlank(message = "Email is mandatory")
+  @Convert(converter = AesEncryptingConverter.class)
+  private String email;
 
-    @Column(name = "date_of_birth")
-    private LocalDate dateOfBirth;
+  @Column(name = "date_of_birth")
+  private LocalDate dateOfBirth;
 
-    @Column(name = "mfa_secret")
-    private String mfaSecret;
+  @Column(name = "mfa_secret")
+  private String mfaSecret;
 
-    @Column(name = "mfa_enabled")
-    private boolean mfaEnabled = false;
+  @Column(name = "mfa_enabled")
+  private boolean mfaEnabled = false;
 }

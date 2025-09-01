@@ -8,35 +8,40 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDate;
-
 @Builder
 @Data
 public class UserDto {
-    private String username;
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Pattern(
-            regexp = "^(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$",
-            message = "Password must be at least 8 characters long, contain 1 uppercase letter and 1 special character"
-    )
-    private String password;
-    @NotBlank
-    private String name;
-    @NotBlank
-    private String surname;
-    @Pattern(
-            regexp = "^(ADMIN|USER)$",
-            message = "Role must be either ADMIN or USER"
-    )
-    private String role;
-    @Email(message = "Invalid email format")
-    private String email;
-    private String phoneNumber;
-    private String address;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate dateOfBirth;
-    private boolean isUsing2FA;
-    private String mfaUri;
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private String secret;
+  @NotBlank private String username;
+
+  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+  @Pattern(
+      regexp = "^(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$",
+      message =
+          "Password must be at least 8 characters long, contain 1 uppercase letter and 1 special character")
+  private String password;
+
+  @NotBlank private String name;
+  @NotBlank private String surname;
+
+  @Pattern(regexp = "^(ADMIN|USER)$", message = "Role must be either ADMIN or USER")
+  private String role;
+
+  @Email(message = "Invalid email format")
+  private String email;
+
+  private String phoneNumber;
+  private String address;
+
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+  @NotBlank(message = "Date of birth is required")
+  @Pattern(
+      regexp = "^\\d{4}-\\d{2}-\\d{2}$",
+      message = "Date of birth must be in yyyy-MM-dd format")
+  private String dateOfBirth;
+
+  private boolean isUsing2FA;
+  private String mfaUri;
+
+  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+  private String secret;
 }
