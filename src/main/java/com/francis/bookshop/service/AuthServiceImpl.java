@@ -10,6 +10,8 @@ import com.francis.bookshop.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -105,6 +107,16 @@ public class AuthServiceImpl implements AuthService {
     public boolean verifyMfaCode(String username, int code) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
         return MFAServiceImpl.verifyCode(user.getMfaSecret(), code);
+    }
+
+    @Override
+    public void ensureAdmin(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        if (user.getRole().getName() != UserRole.ADMIN) {
+            throw new AccessDeniedException("You do not have permission to perform this action");
+        }
     }
 
     private UserDto toDto(User user) {
