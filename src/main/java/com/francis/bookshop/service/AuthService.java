@@ -8,4 +8,5 @@ public interface AuthService {
      UserDto authenticate(UserLoginDto userLoginDto);
      boolean verifyMfaCode(String username, int code);
      void ensureAdmin(String username);
+     UserDto findByUsername(String username);
 }

@@ -5,6 +5,21 @@ plugins {
     id 'com.diffplug.spotless' version '6.25.0'
 }
 
+spotless {
+    java {
+        googleJavaFormat('1.17.0') // or your preferred formatter
+        target 'src/**/*.java'
+    }
+    kotlin {
+        ktlint()
+        target 'src/**/*.kt'
+    }
+    format 'misc', {
+        target '*.gradle', '*.md', '*.gitignore'
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
 group = 'com.francis'
 version = '0.0.1-SNAPSHOT'
 
@@ -36,6 +51,7 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-root:0.11.5'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'commons-codec:commons-codec:1.16.0'
+    implementation 'com.warrenstrange:googleauth:1.5.0'
 
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'

@@ -10,6 +10,7 @@ import com.francis.bookshop.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -65,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
         newUser.setPhoneNumber(userDto.getPhoneNumber());
 
         if (userDto.isUsing2FA()) {
-            String secret = MFAServiceImpl.generateSecret(); // generate a random secret
+            String secret = mfaService.generateSecret(); // generate a random secret
             newUser.setMfaSecret(secret);
             newUser.setMfaEnabled(true);
             mfaUri = mfaService.provisioningUri(userDto);
@@ -99,24 +100,12 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Invalid credentials");
         }
     }
-//    private UserDto performMFAAuthentication(RegisteredUserDto userLoginDto) {
-//        if (userLoginDto.isUsing2FA()) {
-//            if (isNull(userLoginDto.getSecret()) {
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-//                        .body("MFA code required");
-//            }
-//
-//            if (!authService.verifyMfaCode(authenticatedUser.getUsername(), userLoginDto.getMfaCode())) {
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-//                        .body("Invalid MFA code");
-//            }
-//        }
-//    }
+
 
     @Override
     public boolean verifyMfaCode(String username, int code) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return MFAServiceImpl.verifyCode(user.getMfaSecret(), code);
+        return mfaService.verifyCode(user.getMfaSecret(), code);
     }
 
     @Override
@@ -128,6 +117,13 @@ public class AuthServiceImpl implements AuthService {
             throw new AccessDeniedException("You do not have permission to perform this action");
         }
     }
+
+    @Override
+    public UserDto findByUsername(String username) {
+            return userRepository.findByUsername(username)
+                    .map(user -> toDto(user, null))
+                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        }
 
     private UserDto toDto(User user, String uri) {
         return UserDto.builder().surname(user.getSurname()).name(user.getName()).username(user.getUsername()).email(user.getEmail())
