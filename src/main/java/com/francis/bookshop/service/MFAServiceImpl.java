@@ -8,12 +8,16 @@ import org.springframework.stereotype.Service;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 import java.util.Base64;
+import org.apache.commons.codec.binary.Base32;
 
 @Service
 public class MFAServiceImpl  implements MFAService {
-    @Value("app.name")
-    private String appName;
+
+    private  static final String APP_NAME = "BookShop";
+    private static final SecureRandom secureRandom = new SecureRandom();
+
 
     private static final int TIME_STEP_SECONDS = 30;
     private static final int TOTP_DIGITS = 6;
@@ -30,6 +34,13 @@ public class MFAServiceImpl  implements MFAService {
         }
         return false;
     }
+
+    public static String generateSecret() {
+        byte[] randomBytes = new byte[20];
+        secureRandom.nextBytes(randomBytes);
+        return new Base32().encodeToString(randomBytes).replace("=", "");
+    }
+
 
     private static int generateTOTP(String base32Secret, long counter) {
         try {
@@ -61,10 +72,10 @@ public class MFAServiceImpl  implements MFAService {
     public String provisioningUri(UserDto user) {
         return String.format(
                 "otpauth://totp/%s:%s?secret=%s&issuer=%s",
-                appName,
+                APP_NAME,
                 user.getUsername(),
                 user.getSecret(),
-                appName
+                APP_NAME
         );
     }
 }

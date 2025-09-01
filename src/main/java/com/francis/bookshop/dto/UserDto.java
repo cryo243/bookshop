@@ -33,7 +33,7 @@ public class UserDto {
     private String email;
     private String phoneNumber;
     private String address;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
     private boolean isUsing2FA;
     private String mfaUri;

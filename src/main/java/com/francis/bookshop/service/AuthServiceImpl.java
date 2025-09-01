@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Base64;
 import java.util.Optional;
 
 import static java.util.Objects.isNull;
@@ -52,6 +53,7 @@ public class AuthServiceImpl implements AuthService {
         Role roleEntity = roleRepository.findByName(userRole).orElseThrow(() -> new IllegalArgumentException("Role " + userRole + " not found in DB"));
 
         User newUser = new User();
+        String mfaUri = null;
         newUser.setUsername(userDto.getUsername());
         newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
         newUser.setName(userDto.getName());
@@ -61,8 +63,16 @@ public class AuthServiceImpl implements AuthService {
         newUser.setDateOfBirth(userDto.getDateOfBirth());
         newUser.setAddress(userDto.getAddress());
         newUser.setPhoneNumber(userDto.getPhoneNumber());
+
+        if (userDto.isUsing2FA()) {
+            String secret = MFAServiceImpl.generateSecret(); // generate a random secret
+            newUser.setMfaSecret(secret);
+            newUser.setMfaEnabled(true);
+            mfaUri = mfaService.provisioningUri(userDto);
+        }
+
         User savedUser = userRepository.save(newUser);
-        return toDto(savedUser);
+        return toDto(savedUser, mfaUri);
     }
 
     @Override
@@ -77,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
             User user = userOptional.get();
 
             if (passwordEncoder.matches(userLoginDto.getPassword(), user.getPassword())) {
-                return toDto(user);
+                return toDto(user, null);
             } else {
                 loginAttemptService.recordFailure(userLoginDto.getUsername());
                 log.error("failed login attempt username {}", userLoginDto.getUsername());
@@ -119,8 +129,14 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    private UserDto toDto(User user) {
-        return UserDto.builder().surname(user.getSurname()).name(user.getName()).username(user.getUsername()).email(user.getEmail()).phoneNumber(user.getPhoneNumber()).dateOfBirth(user.getDateOfBirth()).address(user.getAddress()).role(user.getRole().getName().toString()).build();
+    private UserDto toDto(User user, String uri) {
+        return UserDto.builder().surname(user.getSurname()).name(user.getName()).username(user.getUsername()).email(user.getEmail())
+                .phoneNumber(user.getPhoneNumber())
+                .dateOfBirth(user.getDateOfBirth())
+                .address(user.getAddress())
+                .role(user.getRole().getName().toString())
+                .mfaUri(uri)
+                .isUsing2FA(user.isMfaEnabled()).build();
     }
 
 }
