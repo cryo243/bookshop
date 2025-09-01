@@ -103,6 +103,7 @@ public class AuthServiceImpl implements AuthService {
       User user = userOptional.get();
 
       if (passwordEncoder.matches(userLoginDto.getPassword(), user.getPassword())) {
+          loginAttemptService.recordSuccess(userLoginDto.getUsername());
         return toDto(user, null);
       } else {
         loginAttemptService.recordFailure(userLoginDto.getUsername());
